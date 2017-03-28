@@ -1,4 +1,6 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import (Flask, render_template,
                    request, redirect, url_for, send_from_directory)
 from werkzeug import secure_filename
@@ -17,6 +19,11 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+def transformDomain(file):
+    app.logger.info('Info')
+    app.logger.info(file)
+    return file
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -24,6 +31,8 @@ def upload_file():
         file = request.files['file']
         # if the file exists and is valid
         if file and allowed_file(file.filename):
+            # Do whatever operations you want to on the file
+            file = transformDomain(file)
             # write it using the hash of its original filename
             # as the new filename
             filename_hash = hashlib.sha224(
@@ -39,7 +48,7 @@ def upload_file():
     <!doctype html>
     <title>Upload new File</title>
     <h1>Upload new File</h1>
-    <h2>MP3s only, please</h2>
+    <h2>WAVs only, please</h2>
     <form action="" method=post enctype=multipart/form-data>
       <p><input type=file name=file>
          <input type=submit value=Upload>
@@ -53,4 +62,7 @@ def uploaded_file(filename):
                                filename)
 
 if __name__ == '__main__':
+    handler = RotatingFileHandler('log.log', maxBytes=100000, backupCount=1)
+    handler.setLevel(logging.INFO)
+    app.logger.addHandler(handler)
     app.run(debug=True)
